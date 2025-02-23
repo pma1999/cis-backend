@@ -5,24 +5,16 @@ import os
 
 app = FastAPI()
 
-# Permitir cualquier subdominio de Vercel y Railway
-origins = [
-    "https://cis-visualizaciones.vercel.app",  # URL final en Vercel
-    "https://cis-backend-production.up.railway.app",  # Backend en Railway
-    "http://localhost:5173",  # Para pruebas locales
-]
-
-# Aceptar todas las URLs de Vercel con una expresión regular
-allow_all_vercel = lambda origin: origin and "vercel.app" in origin
-
+# Middleware de CORS - Permitir cualquier dominio de Vercel y Railway
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Permitir dominios fijos
+    allow_origins=["*"],  # Permitir cualquier origen temporalmente
     allow_origin_regex="https://.*vercel.app",  # Permitir cualquier subdominio de Vercel
     allow_credentials=True,
     allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permitir todos los headers
 )
+
 
 @app.get("/")
 def leer_raiz():
