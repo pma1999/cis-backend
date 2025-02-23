@@ -1,19 +1,24 @@
 from fastapi import FastAPI
 from services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
-
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 app = FastAPI()
 
-# Habilitar CORS para el frontend
+# Lista de orígenes permitidos (frontend en Vercel y Railway)
+origins = [
+    "https://cis-visualizaciones-r7qrpuc3c-pablos-projects-d80d0b2f.vercel.app/",  # Reemplaza con tu URL final en Vercel
+    "https://railway.app",
+    "http://localhost:5173",  # Para pruebas locales
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Permite peticiones desde el frontend
+    allow_origins=origins,  # Permitir peticiones desde estos dominios
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos los métodos (GET, POST, etc.)
-    allow_headers=["*"],  # Permite todos los headers
+    allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permitir todos los headers
 )
-
 
 @app.get("/")
 def leer_raiz():
