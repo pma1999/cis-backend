@@ -1,7 +1,13 @@
 from fastapi import FastAPI
-from services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
 from fastapi.middleware.cors import CORSMiddleware
 import os
+
+# Intentar importar desde la raíz primero (caso local)
+try:
+    from backend.services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
+except ImportError:
+    # Si falla, importar directamente (caso Railway)
+    from services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
 
 app = FastAPI()
 
