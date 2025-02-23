@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from backend.services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
+from services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
 
 from fastapi.middleware.cors import CORSMiddleware
 
