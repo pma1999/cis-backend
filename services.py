@@ -60,55 +60,75 @@ def write_debug(msg):
         f.write(str(msg) + "\n")
 
 def obtener_contingencia(variable1: str, variable2: str):
+    write_debug(f"Starting contingency analysis for variables: {variable1} and {variable2}")
     archivo_sav = "data/3492.sav"
-    df, meta = pyreadstat.read_sav(archivo_sav)
     
-    if variable1 not in df.columns or variable2 not in df.columns:
-        return {"error": "Una o ambas variables no encontradas"}
-    
-    # Crear tabla de contingencia
-    contingencia = pd.crosstab(df[variable1], df[variable2], margins=True)
-    
-    # Calcular porcentajes
-    porcentajes_fila = pd.crosstab(df[variable1], df[variable2], normalize='index') * 100
-    porcentajes_columna = pd.crosstab(df[variable1], df[variable2], normalize='columns') * 100
-    
-    # Obtener etiquetas
-    etiquetas_var1 = meta.variable_value_labels.get(variable1, {})
-    etiquetas_var2 = meta.variable_value_labels.get(variable2, {})
-    
-    # Convertir a diccionario con estructura mejorada
-    resultado = {
-        "datos": {
-            "filas": {
-                str(idx): {
-                    "etiqueta": etiquetas_var1.get(float(idx), str(idx)) if idx != "All" else "Total",
-                    "valores": {
-                        str(col): {
-                            "frecuencia": int(contingencia.loc[idx, col]),
-                            "porcentaje_fila": float(porcentajes_fila.loc[idx, col]) if idx != "All" and col != "All" else None,
-                            "porcentaje_columna": float(porcentajes_columna.loc[idx, col]) if idx != "All" and col != "All" else None
-                        } for col in contingencia.columns
-                    }
-                } for idx in contingencia.index
+    try:
+        write_debug("Attempting to read SAV file...")
+        df, meta = pyreadstat.read_sav(archivo_sav)
+        write_debug(f"SAV file read successfully. DataFrame shape: {df.shape}")
+        
+        if variable1 not in df.columns or variable2 not in df.columns:
+            write_debug(f"Variables not found. Available columns: {df.columns.tolist()}")
+            return {"error": "Una o ambas variables no encontradas"}
+        
+        write_debug("Creating contingency table...")
+        # Crear tabla de contingencia
+        contingencia = pd.crosstab(df[variable1], df[variable2], margins=True)
+        write_debug(f"Contingency table created with shape: {contingencia.shape}")
+        
+        # Calcular porcentajes
+        write_debug("Calculating percentages...")
+        porcentajes_fila = pd.crosstab(df[variable1], df[variable2], normalize='index') * 100
+        porcentajes_columna = pd.crosstab(df[variable1], df[variable2], normalize='columns') * 100
+        
+        # Obtener etiquetas
+        write_debug("Getting variable labels...")
+        etiquetas_var1 = meta.variable_value_labels.get(variable1, {})
+        etiquetas_var2 = meta.variable_value_labels.get(variable2, {})
+        write_debug(f"Labels for {variable1}: {etiquetas_var1}")
+        write_debug(f"Labels for {variable2}: {etiquetas_var2}")
+        
+        # Convertir a diccionario con estructura mejorada
+        write_debug("Building response structure...")
+        resultado = {
+            "datos": {
+                "filas": {
+                    str(idx): {
+                        "etiqueta": etiquetas_var1.get(float(idx), str(idx)) if idx != "All" else "Total",
+                        "valores": {
+                            str(col): {
+                                "frecuencia": int(contingencia.loc[idx, col]),
+                                "porcentaje_fila": float(porcentajes_fila.loc[idx, col]) if idx != "All" and col != "All" else None,
+                                "porcentaje_columna": float(porcentajes_columna.loc[idx, col]) if idx != "All" and col != "All" else None
+                            } for col in contingencia.columns
+                        }
+                    } for idx in contingencia.index
+                },
+                "columnas": {
+                    str(col): {
+                        "etiqueta": etiquetas_var2.get(float(col), str(col)) if col != "All" else "Total"
+                    } for col in contingencia.columns
+                }
             },
-            "columnas": {
-                str(col): {
-                    "etiqueta": etiquetas_var2.get(float(col), str(col)) if col != "All" else "Total"
-                } for col in contingencia.columns
-            }
-        },
-        "metadatos": {
-            "variable1": {
-                "codigo": variable1,
-                "etiqueta": meta.column_labels[meta.column_names.index(variable1)],
-                "total_casos": int(contingencia.loc["All", "All"])
-            },
-            "variable2": {
-                "codigo": variable2,
-                "etiqueta": meta.column_labels[meta.column_names.index(variable2)]
+            "metadatos": {
+                "variable1": {
+                    "codigo": variable1,
+                    "etiqueta": meta.column_labels[meta.column_names.index(variable1)],
+                    "total_casos": int(contingencia.loc["All", "All"])
+                },
+                "variable2": {
+                    "codigo": variable2,
+                    "etiqueta": meta.column_labels[meta.column_names.index(variable2)]
+                }
             }
         }
-    }
-    
-    return resultado
+        write_debug("Response structure built successfully")
+        return resultado
+        
+    except Exception as e:
+        write_debug(f"Error in contingency analysis: {str(e)}")
+        write_debug(f"Error type: {type(e)}")
+        import traceback
+        write_debug(f"Traceback: {traceback.format_exc()}")
+        raise
