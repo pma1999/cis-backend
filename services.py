@@ -53,3 +53,25 @@ def obtener_metadatos():
         "etiquetas_variables": etiquetas_variables,
         "etiquetas_valores": etiquetas_valores
     }
+
+def obtener_contingencia(variable1: str, variable2: str):
+    archivo_sav = "data/3492.sav"
+    df, meta = pyreadstat.read_sav(archivo_sav)
+    
+    if variable1 not in df.columns or variable2 not in df.columns:
+        return {"error": "Una o ambas variables no encontradas"}
+    
+    # Crear tabla de contingencia
+    contingencia = pd.crosstab(df[variable1], df[variable2], margins=True)
+    
+    # Calcular porcentajes por fila y columna
+    porcentajes_fila = pd.crosstab(df[variable1], df[variable2], normalize='index') * 100
+    porcentajes_columna = pd.crosstab(df[variable1], df[variable2], normalize='columns') * 100
+    
+    # Convertir a diccionarios para la respuesta JSON
+    return {
+        "tabla": contingencia.to_dict(),
+        "porcentajes_fila": porcentajes_fila.to_dict(),
+        "porcentajes_columna": porcentajes_columna.to_dict(),
+        "total_casos": int(contingencia.iloc[-1, -1])  # Total general
+    }

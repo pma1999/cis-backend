@@ -4,10 +4,10 @@ import os
 
 # Intentar importar desde la raíz primero (caso local)
 try:
-    from backend.services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
+    from backend.services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos, obtener_contingencia
 except ImportError:
     # Si falla, importar directamente (caso Railway)
-    from services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos
+    from services import cargar_datos, listar_variables, obtener_datos_variable, obtener_distribucion, obtener_metadatos, obtener_contingencia
 
 app = FastAPI()
 
@@ -48,3 +48,7 @@ def obtener_distribucion_variable(variable: str):
 @app.get("/metadatos")
 def obtener_metadatos_api():
     return obtener_metadatos()
+
+@app.get("/contingencia/{variable1}/{variable2}")
+def obtener_contingencia_variables(variable1: str, variable2: str):
+    return obtener_contingencia(variable1, variable2)
