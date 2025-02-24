@@ -4,7 +4,7 @@ import os
 import json
 
 def cargar_datos():
-    archivo_sav = "data/3492.sav"  # Asegúrate de subir el archivo aquí
+    archivo_sav = "data/3492.sav"
     df, meta = pyreadstat.read_sav(archivo_sav)
     return df
 
@@ -12,12 +12,10 @@ def listar_variables():
     archivo_sav = os.path.abspath("data/3492.sav")
     _, meta = pyreadstat.read_sav(archivo_sav)
     
-    # Crear un diccionario que asocia el nombre de la variable a su etiqueta
     mapping = {}
     for name, label in zip(meta.column_names, meta.column_labels):
         mapping[name] = label
     return mapping
-
 
 def obtener_datos_variable(variable: str):
     archivo_sav = "data/3492.sav"
@@ -26,7 +24,7 @@ def obtener_datos_variable(variable: str):
     if variable not in df.columns:
         return {"error": "Variable no encontrada"}
     
-    return df[[variable]].dropna()  # Devuelve solo la columna solicitada, eliminando nulos
+    return df[[variable]].dropna()
 
 def obtener_distribucion(variable: str):
     archivo_sav = "data/3492.sav"
@@ -35,19 +33,14 @@ def obtener_distribucion(variable: str):
     if variable not in df.columns:
         return {"error": "Variable no encontrada"}
     
-    conteo = df[variable].value_counts().to_dict()  # Cuenta respuestas
+    conteo = df[variable].value_counts().to_dict()
     return conteo
-
-
 
 def obtener_metadatos():
     archivo_sav = os.path.abspath("data/3492.sav")
     df, meta = pyreadstat.read_sav(archivo_sav)
 
-    # Diccionario de etiquetas de variables
     etiquetas_variables = meta.column_labels
-
-    # Diccionario de etiquetas de valores
     etiquetas_valores = meta.variable_value_labels
 
     return {
@@ -64,33 +57,19 @@ def obtener_contingencia(variable1: str, variable2: str):
     archivo_sav = "data/3492.sav"
     
     try:
-        write_debug("Attempting to read SAV file...")
         df, meta = pyreadstat.read_sav(archivo_sav)
-        write_debug(f"SAV file read successfully. DataFrame shape: {df.shape}")
         
         if variable1 not in df.columns or variable2 not in df.columns:
             write_debug(f"Variables not found. Available columns: {df.columns.tolist()}")
             return {"error": "Una o ambas variables no encontradas"}
         
-        write_debug("Creating contingency table...")
-        # Crear tabla de contingencia
         contingencia = pd.crosstab(df[variable1], df[variable2], margins=True)
-        write_debug(f"Contingency table created with shape: {contingencia.shape}")
-        
-        # Calcular porcentajes
-        write_debug("Calculating percentages...")
         porcentajes_fila = pd.crosstab(df[variable1], df[variable2], normalize='index') * 100
         porcentajes_columna = pd.crosstab(df[variable1], df[variable2], normalize='columns') * 100
         
-        # Obtener etiquetas
-        write_debug("Getting variable labels...")
         etiquetas_var1 = meta.variable_value_labels.get(variable1, {})
         etiquetas_var2 = meta.variable_value_labels.get(variable2, {})
-        write_debug(f"Labels for {variable1}: {etiquetas_var1}")
-        write_debug(f"Labels for {variable2}: {etiquetas_var2}")
         
-        # Convertir a diccionario con estructura mejorada
-        write_debug("Building response structure...")
         resultado = {
             "datos": {
                 "filas": {
@@ -123,12 +102,10 @@ def obtener_contingencia(variable1: str, variable2: str):
                 }
             }
         }
-        write_debug("Response structure built successfully")
         return resultado
         
     except Exception as e:
         write_debug(f"Error in contingency analysis: {str(e)}")
-        write_debug(f"Error type: {type(e)}")
         import traceback
         write_debug(f"Traceback: {traceback.format_exc()}")
         raise
