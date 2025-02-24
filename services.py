@@ -1,6 +1,7 @@
 import pandas as pd
 import pyreadstat
 import os
+import json
 
 def cargar_datos():
     archivo_sav = "data/3492.sav"  # Asegúrate de subir el archivo aquí
@@ -54,6 +55,10 @@ def obtener_metadatos():
         "etiquetas_valores": etiquetas_valores
     }
 
+def write_debug(msg):
+    with open("debug.log", "a", encoding='utf-8') as f:
+        f.write(str(msg) + "\n")
+
 def obtener_contingencia(variable1: str, variable2: str):
     archivo_sav = "data/3492.sav"
     df, meta = pyreadstat.read_sav(archivo_sav)
@@ -64,14 +69,46 @@ def obtener_contingencia(variable1: str, variable2: str):
     # Crear tabla de contingencia
     contingencia = pd.crosstab(df[variable1], df[variable2], margins=True)
     
-    # Calcular porcentajes por fila y columna
+    # Calcular porcentajes
     porcentajes_fila = pd.crosstab(df[variable1], df[variable2], normalize='index') * 100
     porcentajes_columna = pd.crosstab(df[variable1], df[variable2], normalize='columns') * 100
     
-    # Convertir a diccionarios para la respuesta JSON
-    return {
-        "tabla": contingencia.to_dict(),
-        "porcentajes_fila": porcentajes_fila.to_dict(),
-        "porcentajes_columna": porcentajes_columna.to_dict(),
-        "total_casos": int(contingencia.iloc[-1, -1])  # Total general
+    # Obtener etiquetas
+    etiquetas_var1 = meta.variable_value_labels.get(variable1, {})
+    etiquetas_var2 = meta.variable_value_labels.get(variable2, {})
+    
+    # Convertir a diccionario con estructura mejorada
+    resultado = {
+        "datos": {
+            "filas": {
+                str(idx): {
+                    "etiqueta": etiquetas_var1.get(float(idx), str(idx)) if idx != "All" else "Total",
+                    "valores": {
+                        str(col): {
+                            "frecuencia": int(contingencia.loc[idx, col]),
+                            "porcentaje_fila": float(porcentajes_fila.loc[idx, col]) if idx != "All" and col != "All" else None,
+                            "porcentaje_columna": float(porcentajes_columna.loc[idx, col]) if idx != "All" and col != "All" else None
+                        } for col in contingencia.columns
+                    }
+                } for idx in contingencia.index
+            },
+            "columnas": {
+                str(col): {
+                    "etiqueta": etiquetas_var2.get(float(col), str(col)) if col != "All" else "Total"
+                } for col in contingencia.columns
+            }
+        },
+        "metadatos": {
+            "variable1": {
+                "codigo": variable1,
+                "etiqueta": meta.column_labels[meta.column_names.index(variable1)],
+                "total_casos": int(contingencia.loc["All", "All"])
+            },
+            "variable2": {
+                "codigo": variable2,
+                "etiqueta": meta.column_labels[meta.column_names.index(variable2)]
+            }
+        }
     }
+    
+    return resultado
